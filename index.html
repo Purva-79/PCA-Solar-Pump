@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PCA Solar-Pump Sensor Monitor | Mining Site Operations</title>
+  <meta name="description" content="PCA-Based Compression of Multivariate Solar-Pump Sensor Streams for Mining Site Operational Monitoring. Real-time analysis of solar output, pump load, and water-level sensors." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ===== NAVBAR ===== -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-inner">
+      <div class="nav-logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="18" cy="18" r="8" fill="#FFD700" opacity="0.9"/>
+            <line x1="18" y1="2" x2="18" y2="8" stroke="#FFD700" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="18" y1="28" x2="18" y2="34" stroke="#FFD700" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="2" y1="18" x2="8" y2="18" stroke="#FFD700" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="28" y1="18" x2="34" y2="18" stroke="#FFD700" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="6.5" y1="6.5" x2="11" y2="11" stroke="#FFD700" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="25" y1="25" x2="29.5" y2="29.5" stroke="#FFD700" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="29.5" y1="6.5" x2="25" y2="11" stroke="#FFD700" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="11" y1="25" x2="6.5" y2="29.5" stroke="#FFD700" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <span class="logo-text">SolarPCA<span class="logo-accent">Monitor</span></span>
+      </div>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#overview" class="nav-link">Overview</a></li>
+        <li><a href="#sensors" class="nav-link">Sensor Streams</a></li>
+        <li><a href="#pca" class="nav-link">PCA Engine</a></li>
+        <li><a href="#visualization" class="nav-link">Visualization</a></li>
+        <li><a href="#regimes" class="nav-link">Op Regimes</a></li>
+        <li><a href="#data-table" class="nav-link nav-link-data">📊 Data</a></li>
+      </ul>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ===== HERO SECTION ===== -->
+  <section class="hero" id="overview">
+    <div class="hero-bg">
+      <div class="hero-particles" id="heroParticles"></div>
+      <div class="hero-grid"></div>
+    </div>
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span class="badge-dot"></span>
+        Mining Site Operations · Live Monitoring
+      </div>
+      <h1 class="hero-title">
+        PCA-Based Sensor<br/>
+        <span class="hero-gradient">Stream Compression</span>
+      </h1>
+      <p class="hero-subtitle">
+        Multivariate analysis of solar-output, pump-load & water-level sensor streams
+        using Principal Component Analysis for mining site operational intelligence.
+      </p>
+      <div class="hero-stats">
+        <div class="stat-card">
+          <div class="stat-value" id="statSensors">9</div>
+          <div class="stat-label">Sensor Channels</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statComponents">3</div>
+          <div class="stat-label">Principal Components</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statVariance">94.7%</div>
+          <div class="stat-label">Variance Retained</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statStatus">ACTIVE</div>
+          <div class="stat-label">System Status</div>
+        </div>
+      </div>
+      <div class="hero-cta">
+        <a href="#sensors" class="btn-primary">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline></svg>
+          Explore Data
+        </a>
+        <a href="#pca" class="btn-outline">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
+          Run PCA
+        </a>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="hero-chart-wrapper">
+        <canvas id="heroChart" width="500" height="320"></canvas>
+        <div class="chart-overlay-label">Live Sensor Feed</div>
+      </div>
+    </div>
+    <div class="scroll-indicator">
+      <div class="scroll-wheel"></div>
+    </div>
+  </section>
+
+  <!-- ===== OBJECTIVES SECTION ===== -->
+  <section class="objectives-section">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag">Project Framework</div>
+        <h2 class="section-title">Research Objectives</h2>
+        <p class="section-desc">Three interconnected goals driving our operational intelligence pipeline</p>
+      </div>
+      <div class="objectives-grid">
+        <div class="obj-card" data-aos="fade-up">
+          <div class="obj-num">01</div>
+          <div class="obj-icon">
+            <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="6" y="30" width="8" height="12" rx="2" fill="#FFD700" opacity="0.3"/>
+              <rect x="20" y="20" width="8" height="22" rx="2" fill="#FFD700" opacity="0.6"/>
+              <rect x="34" y="10" width="8" height="32" rx="2" fill="#FFD700"/>
+              <path d="M6 36 L20 26 L34 16 L42 10" stroke="#FFD700" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h3>Collect Sensor Streams</h3>
+          <p>Gather multivariate solar-output, pump-load, and water-level sensor streams from distributed mining site sensors in real-time operational conditions.</p>
+          <div class="obj-tags">
+            <span>Solar Irradiance</span>
+            <span>Pump Load</span>
+            <span>Water Level</span>
+          </div>
+        </div>
+        <div class="obj-card" data-aos="fade-up" data-delay="100">
+          <div class="obj-num">02</div>
+          <div class="obj-icon">
+            <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <ellipse cx="24" cy="24" rx="18" ry="10" stroke="#FFD700" stroke-width="2" fill="none"/>
+              <ellipse cx="24" cy="24" rx="12" ry="6" stroke="#FFD700" stroke-width="2" fill="none" opacity="0.6"/>
+              <circle cx="24" cy="24" r="4" fill="#FFD700"/>
+              <line x1="6" y1="24" x2="42" y2="24" stroke="#FFD700" stroke-width="1.5" stroke-dasharray="3 3"/>
+              <line x1="24" y1="14" x2="24" y2="34" stroke="#FFD700" stroke-width="1.5" stroke-dasharray="3 3"/>
+            </svg>
+          </div>
+          <h3>Apply PCA Compression</h3>
+          <p>Apply Principal Component Analysis to compress the high-dimensional sensor feature set while retaining maximum operational variance for meaningful analysis.</p>
+          <div class="obj-tags">
+            <span>Dimensionality Reduction</span>
+            <span>Variance Retention</span>
+            <span>Feature Compression</span>
+          </div>
+        </div>
+        <div class="obj-card" data-aos="fade-up" data-delay="200">
+          <div class="obj-num">03</div>
+          <div class="obj-icon">
+            <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="16" cy="20" r="6" fill="#FFD700" opacity="0.3"/>
+              <circle cx="16" cy="20" r="3" fill="#FFD700" opacity="0.7"/>
+              <circle cx="32" cy="30" r="4" fill="#FFD700" opacity="0.5"/>
+              <circle cx="28" cy="14" r="5" fill="#FFD700" opacity="0.8"/>
+              <circle cx="38" cy="20" r="3" fill="#FFD700"/>
+              <circle cx="10" cy="34" r="2" fill="#FFD700" opacity="0.6"/>
+              <rect x="4" y="40" width="40" height="2" rx="1" fill="#FFD700" opacity="0.4"/>
+              <rect x="4" y="8" width="2" height="34" rx="1" fill="#FFD700" opacity="0.4"/>
+            </svg>
+          </div>
+          <h3>Visualize Operating Regimes</h3>
+          <p>Visualize reduced PCA representations to clearly distinguish normal vs. strained operating regimes, enabling early anomaly detection and intervention.</p>
+          <div class="obj-tags">
+            <span>Normal Regime</span>
+            <span>Strained Regime</span>
+            <span>Anomaly Detection</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SENSOR STREAMS SECTION ===== -->
+  <section class="sensors-section" id="sensors">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag">Objective 01</div>
+        <h2 class="section-title">Multivariate Sensor Streams</h2>
+        <p class="section-desc">Real-time collection from 9 sensor channels across 3 operational subsystems</p>
+      </div>
+
+      <!-- Live Controls -->
+      <div class="controls-bar">
+        <div class="control-group">
+          <label>Time Window</label>
+          <div class="segmented-control" id="timeWindow">
+            <button class="seg-btn active" data-value="50">50 pts</button>
+            <button class="seg-btn" data-value="100">100 pts</button>
+            <button class="seg-btn" data-value="200">200 pts</button>
+          </div>
+        </div>
+        <div class="control-group">
+          <label>Noise Level</label>
+          <input type="range" min="0" max="100" value="30" class="slider" id="noiseSlider" />
+          <span class="slider-val" id="noiseVal">30%</span>
+        </div>
+        <div class="control-group">
+          <button class="btn-sm btn-primary" id="regenerateBtn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+            Regenerate
+          </button>
+          <button class="btn-sm btn-outline" id="toggleLiveBtn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" id="liveIcon"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+            <span id="liveLabel">Live Feed</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Sensor Cards Grid -->
+      <div class="sensor-groups">
+        <!-- Solar Group -->
+        <div class="sensor-group-card">
+          <div class="group-header solar">
+            <div class="group-icon">☀️</div>
+            <div>
+              <div class="group-title">Solar Output Subsystem</div>
+              <div class="group-subtitle">Photovoltaic Array Monitoring</div>
+            </div>
+            <div class="group-status" id="solarStatus">
+              <span class="status-dot active"></span> Nominal
+            </div>
+          </div>
+          <div class="sensor-mini-cards">
+            <div class="mini-card">
+              <div class="mini-label">Irradiance (W/m²)</div>
+              <div class="mini-val" id="val-irr">—</div>
+              <div class="mini-bar"><div class="mini-fill solar-fill" id="bar-irr"></div></div>
+            </div>
+            <div class="mini-card">
+              <div class="mini-label">PV Voltage (V)</div>
+              <div class="mini-val" id="val-pvv">—</div>
+              <div class="mini-bar"><div class="mini-fill solar-fill" id="bar-pvv"></div></div>
+            </div>
+            <div class="mini-card">
+              <div class="mini-label">PV Current (A)</div>
+              <div class="mini-val" id="val-pvi">—</div>
+              <div class="mini-bar"><div class="mini-fill solar-fill" id="bar-pvi"></div></div>
+            </div>
+          </div>
+          <div class="chart-box">
+            <canvas id="solarChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Pump Group -->
+        <div class="sensor-group-card">
+          <div class="group-header pump">
+            <div class="group-icon">⚙️</div>
+            <div>
+              <div class="group-title">Pump Load Subsystem</div>
+              <div class="group-subtitle">Motor & Hydraulic Monitoring</div>
+            </div>
+            <div class="group-status" id="pumpStatus">
+              <span class="status-dot active"></span> Nominal
+            </div>
+          </div>
+          <div class="sensor-mini-cards">
+            <div class="mini-card">
+              <div class="mini-label">Motor RPM</div>
+              <div class="mini-val" id="val-rpm">—</div>
+              <div class="mini-bar"><div class="mini-fill pump-fill" id="bar-rpm"></div></div>
+            </div>
+            <div class="mini-card">
+              <div class="mini-label">Flow Rate (L/min)</div>
+              <div class="mini-val" id="val-flow">—</div>
+              <div class="mini-bar"><div class="mini-fill pump-fill" id="bar-flow"></div></div>
+            </div>
+            <div class="mini-card">
+              <div class="mini-label">Pump Vibration (g)</div>
+              <div class="mini-val" id="val-vib">—</div>
+              <div class="mini-bar"><div class="mini-fill pump-fill" id="bar-vib"></div></div>
+            </div>
+          </div>
+          <div class="chart-box">
+            <canvas id="pumpChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Water Group -->
+        <div class="sensor-group-card">
+          <div class="group-header water">
+            <div class="group-icon">💧</div>
+            <div>
+              <div class="group-title">Water Level Subsystem</div>
+              <div class="group-subtitle">Reservoir & Pressure Monitoring</div>
+            </div>
+            <div class="group-status" id="waterStatus">
+              <span class="status-dot active"></span> Nominal
+            </div>
+          </div>
+          <div class="sensor-mini-cards">
+            <div class="mini-card">
+              <div class="mini-label">Tank Level (%)</div>
+              <div class="mini-val" id="val-level">—</div>
+              <div class="mini-bar"><div class="mini-fill water-fill" id="bar-level"></div></div>
+            </div>
+            <div class="mini-card">
+              <div class="mini-label">Pressure (kPa)</div>
+              <div class="mini-val" id="val-pres">—</div>
+              <div class="mini-bar"><div class="mini-fill water-fill" id="bar-pres"></div></div>
+            </div>
+            <div class="mini-card">
+              <div class="mini-label">Turbidity (NTU)</div>
+              <div class="mini-val" id="val-turb">—</div>
+              <div class="mini-bar"><div class="mini-fill water-fill" id="bar-turb"></div></div>
+            </div>
+          </div>
+          <div class="chart-box">
+            <canvas id="waterChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Correlation Matrix -->
+      <div class="correlation-section">
+        <h3 class="sub-section-title">Sensor Correlation Matrix</h3>
+        <p class="sub-section-desc">Pearson correlation coefficients between all 9 sensor channels — higher correlations indicate PCA compression potential</p>
+        <div class="corr-wrapper">
+          <div class="corr-grid" id="corrMatrix"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== PCA ENGINE SECTION ===== -->
+  <section class="pca-section" id="pca">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag">Objective 02</div>
+        <h2 class="section-title">PCA Compression Engine</h2>
+        <p class="section-desc">Principal Component Analysis applied to compress 9 sensor features while retaining maximum operational variance</p>
+      </div>
+
+      <!-- PCA Config Panel -->
+      <div class="pca-config-row">
+        <div class="pca-config-card">
+          <h4>PCA Configuration</h4>
+          <div class="config-row">
+            <div class="config-item">
+              <label>Components to Retain</label>
+              <div class="stepper">
+                <button class="step-btn" id="compMinus">−</button>
+                <span class="step-val" id="compVal">3</span>
+                <button class="step-btn" id="compPlus">+</button>
+              </div>
+            </div>
+            <div class="config-item">
+              <label>Standardize Features</label>
+              <label class="toggle-switch">
+                <input type="checkbox" id="standardizeToggle" checked />
+                <span class="toggle-track"></span>
+              </label>
+            </div>
+            <div class="config-item">
+              <label>Covariance Method</label>
+              <select class="styled-select" id="covMethod">
+                <option value="standard">Standard</option>
+                <option value="robust">Robust (SVD)</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn-primary full-width" id="runPCABtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            Run PCA Analysis
+          </button>
+        </div>
+
+        <!-- Variance Explained Card -->
+        <div class="variance-card">
+          <h4>Variance Explained</h4>
+          <div class="variance-bars" id="varianceBars">
+            <!-- filled by JS -->
+          </div>
+          <div class="cumulative-row">
+            <span>Cumulative Variance:</span>
+            <span class="cum-val" id="cumulativeVar">—</span>
+          </div>
+        </div>
+
+        <!-- Eigenvalue Card -->
+        <div class="eigen-card">
+          <h4>Eigenvalue Spectrum</h4>
+          <div class="chart-box-sm">
+            <canvas id="eigenChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading / Biplot -->
+      <div class="pca-charts-row">
+        <div class="pca-chart-card loading-card">
+          <div class="chart-card-header">
+            <h4>PCA Loadings (Component Weights)</h4>
+            <div class="chart-legend">
+              <span class="leg-item"><span class="leg-dot" style="background:#FFD700"></span>PC1</span>
+              <span class="leg-item"><span class="leg-dot" style="background:#FFF176"></span>PC2</span>
+              <span class="leg-item"><span class="leg-dot" style="background:#FFE082"></span>PC3</span>
+            </div>
+          </div>
+          <canvas id="loadingChart" height="260"></canvas>
+        </div>
+        <div class="pca-chart-card">
+          <div class="chart-card-header">
+            <h4>Scree Plot (Elbow Analysis)</h4>
+          </div>
+          <canvas id="screeChart" height="260"></canvas>
+        </div>
+      </div>
+
+      <!-- PCA Stats Banner -->
+      <div class="pca-stats-banner" id="pcaStatsBanner">
+        <div class="pca-stat">
+          <div class="pca-stat-icon">📐</div>
+          <div class="pca-stat-val" id="ps-dims">9 → 3</div>
+          <div class="pca-stat-label">Dimensionality</div>
+        </div>
+        <div class="pca-stat">
+          <div class="pca-stat-icon">📊</div>
+          <div class="pca-stat-val" id="ps-var">94.7%</div>
+          <div class="pca-stat-label">Variance Kept</div>
+        </div>
+        <div class="pca-stat">
+          <div class="pca-stat-icon">🗜️</div>
+          <div class="pca-stat-val" id="ps-ratio">67%</div>
+          <div class="pca-stat-label">Compression Ratio</div>
+        </div>
+        <div class="pca-stat">
+          <div class="pca-stat-icon">📉</div>
+          <div class="pca-stat-val" id="ps-recon">0.053</div>
+          <div class="pca-stat-label">Reconstruction Error</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== VISUALIZATION SECTION ===== -->
+  <section class="viz-section" id="visualization">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag">Objective 03</div>
+        <h2 class="section-title">Reduced Representations</h2>
+        <p class="section-desc">PCA-projected sensor data plotted in principal component space — revealing hidden operational structure</p>
+      </div>
+
+      <div class="viz-grid">
+        <!-- PC1 vs PC2 Scatter -->
+        <div class="viz-card main-scatter">
+          <div class="chart-card-header">
+            <h4>PC1 vs PC2 — Operating Regime Map</h4>
+            <div class="chart-legend">
+              <span class="leg-item"><span class="leg-dot normal-dot"></span>Normal</span>
+              <span class="leg-item"><span class="leg-dot strained-dot"></span>Strained</span>
+              <span class="leg-item"><span class="leg-dot anomaly-dot"></span>Anomaly</span>
+            </div>
+          </div>
+          <canvas id="scatter12" height="300"></canvas>
+        </div>
+
+        <!-- PC1 vs PC3 Scatter -->
+        <div class="viz-card">
+          <div class="chart-card-header">
+            <h4>PC1 vs PC3</h4>
+          </div>
+          <canvas id="scatter13" height="260"></canvas>
+        </div>
+
+        <!-- PC2 vs PC3 Scatter -->
+        <div class="viz-card">
+          <div class="chart-card-header">
+            <h4>PC2 vs PC3</h4>
+          </div>
+          <canvas id="scatter23" height="260"></canvas>
+        </div>
+      </div>
+
+      <!-- PC Timeseries -->
+      <div class="pc-timeline-card">
+        <div class="chart-card-header">
+          <h4>Principal Component Timeseries</h4>
+          <div class="chart-legend">
+            <span class="leg-item"><span class="leg-dot" style="background:#FFD700"></span>PC1 Score</span>
+            <span class="leg-item"><span class="leg-dot" style="background:#FFF9C4"></span>PC2 Score</span>
+            <span class="leg-item"><span class="leg-dot" style="background:#FFE082"></span>PC3 Score</span>
+          </div>
+        </div>
+        <canvas id="pcTimeChart" height="180"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== OPERATING REGIMES SECTION ===== -->
+  <section class="regimes-section" id="regimes">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag">Operational Intelligence</div>
+        <h2 class="section-title">Operating Regime Detection</h2>
+        <p class="section-desc">Automated classification of pump operating states using PCA score thresholds</p>
+      </div>
+
+      <div class="regimes-layout">
+        <!-- Regime Cards -->
+        <div class="regime-cards">
+          <div class="regime-card normal-regime">
+            <div class="regime-header">
+              <div class="regime-icon-wrap normal-icon">✅</div>
+              <div>
+                <div class="regime-title">Normal Operation</div>
+                <div class="regime-sub">Stable equilibrium zone</div>
+              </div>
+              <div class="regime-pct" id="normalPct">—</div>
+            </div>
+            <ul class="regime-criteria">
+              <li><span class="crit-label">|PC1 Score|</span><span class="crit-val">&lt; 1.5σ</span></li>
+              <li><span class="crit-label">Solar Irradiance</span><span class="crit-val">600–1000 W/m²</span></li>
+              <li><span class="crit-label">Flow Rate</span><span class="crit-val">40–80 L/min</span></li>
+              <li><span class="crit-label">Vibration</span><span class="crit-val">&lt; 2.5g</span></li>
+            </ul>
+            <div class="regime-desc">System operates within designed parameters. Solar panels deliver rated output, pump runs at optimal RPM, water levels are stable.</div>
+          </div>
+
+          <div class="regime-card strained-regime">
+            <div class="regime-header">
+              <div class="regime-icon-wrap strained-icon">⚠️</div>
+              <div>
+                <div class="regime-title">Strained Operation</div>
+                <div class="regime-sub">Elevated stress zone</div>
+              </div>
+              <div class="regime-pct" id="strainedPct">—</div>
+            </div>
+            <ul class="regime-criteria">
+              <li><span class="crit-label">|PC1 Score|</span><span class="crit-val">1.5–3.0σ</span></li>
+              <li><span class="crit-label">Solar Irradiance</span><span class="crit-val">&lt; 600 W/m²</span></li>
+              <li><span class="crit-label">Flow Rate</span><span class="crit-val">&lt; 40 or &gt;80</span></li>
+              <li><span class="crit-label">Vibration</span><span class="crit-val">2.5–5.0g</span></li>
+            </ul>
+            <div class="regime-desc">Solar output degraded (cloud cover / panel fault). Pump compensates, increasing load. Vibration rises — intervention recommended.</div>
+          </div>
+
+          <div class="regime-card anomaly-regime">
+            <div class="regime-header">
+              <div class="regime-icon-wrap anomaly-icon">🚨</div>
+              <div>
+                <div class="regime-title">Anomaly Detected</div>
+                <div class="regime-sub">Critical out-of-distribution</div>
+              </div>
+              <div class="regime-pct" id="anomalyPct">—</div>
+            </div>
+            <ul class="regime-criteria">
+              <li><span class="crit-label">|PC1 Score|</span><span class="crit-val">&gt; 3.0σ</span></li>
+              <li><span class="crit-label">T² Statistic</span><span class="crit-val">&gt; 99th pct</span></li>
+              <li><span class="crit-label">Q Statistic</span><span class="crit-val">&gt; 95th pct</span></li>
+              <li><span class="crit-label">Vibration</span><span class="crit-val">&gt; 5.0g</span></li>
+            </ul>
+            <div class="regime-desc">Critical deviation from operational envelope. Potential equipment failure, blockage, or sensor malfunction. Immediate inspection required.</div>
+          </div>
+        </div>
+
+        <!-- Regime Distribution Chart -->
+        <div class="regime-charts">
+          <div class="regime-dist-card">
+            <h4>Regime Distribution</h4>
+            <canvas id="regimeDonut" height="220"></canvas>
+          </div>
+          <div class="regime-dist-card">
+            <h4>T² Hotelling Statistic</h4>
+            <canvas id="t2Chart" height="220"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Regime Timeline -->
+      <div class="regime-timeline-card">
+        <div class="chart-card-header">
+          <h4>Regime Timeline — Operational State History</h4>
+          <div class="timeline-legend">
+            <span class="leg-item"><span class="leg-box" style="background:rgba(74,222,128,0.6)"></span>Normal</span>
+            <span class="leg-item"><span class="leg-box" style="background:rgba(251,191,36,0.7)"></span>Strained</span>
+            <span class="leg-item"><span class="leg-box" style="background:rgba(239,68,68,0.7)"></span>Anomaly</span>
+          </div>
+        </div>
+        <canvas id="regimeTimeline" height="140"></canvas>
+      </div>
+
+      <!-- Alert Log -->
+      <div class="alert-log-card">
+        <div class="alert-log-header">
+          <h4>Operational Alert Log</h4>
+          <span class="alert-count" id="alertCount">0 alerts</span>
+        </div>
+        <div class="alert-list" id="alertList">
+          <!-- filled by JS -->
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="nav-logo">
+          <div class="logo-icon">
+            <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="18" cy="18" r="8" fill="#FFD700" opacity="0.9"/>
+              <line x1="18" y1="2" x2="18" y2="8" stroke="#FFD700" stroke-width="2.5" stroke-linecap="round"/>
+              <line x1="18" y1="28" x2="18" y2="34" stroke="#FFD700" stroke-width="2.5" stroke-linecap="round"/>
+              <line x1="2" y1="18" x2="8" y2="18" stroke="#FFD700" stroke-width="2.5" stroke-linecap="round"/>
+              <line x1="28" y1="18" x2="34" y2="18" stroke="#FFD700" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <span class="logo-text">SolarPCA<span class="logo-accent">Monitor</span></span>
+        </div>
+        <p>PCA-Based Compression of Multivariate Solar-Pump Sensor Streams for Mining Site Operational Monitoring</p>
+      </div>
+      <div class="footer-info">
+        <div class="footer-col">
+          <div class="footer-label">Technology</div>
+          <div class="footer-val">Principal Component Analysis</div>
+          <div class="footer-val">Multivariate Time Series</div>
+          <div class="footer-val">Anomaly Detection</div>
+        </div>
+        <div class="footer-col">
+          <div class="footer-label">Application</div>
+          <div class="footer-val">Mining Site Operations</div>
+          <div class="footer-val">Solar-Pump Systems</div>
+          <div class="footer-val">Industrial IoT</div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 SolarPCA Monitor · Mining Site Operational Intelligence</span>
+    </div>
+  </footer>
+
+  <!-- ===== DATA TABLE SECTION ===== -->
+  <section class="data-table-section" id="data-table">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag">Raw Dataset</div>
+        <h2 class="section-title">Sensor Data & PCA Scores</h2>
+        <p class="section-desc">Full multivariate sensor readings with PCA-projected scores and regime labels for all 200 samples</p>
+      </div>
+
+      <!-- Download & Filter Bar -->
+      <div class="dt-toolbar">
+        <div class="dt-search-wrap">
+          <svg class="dt-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="dtSearch" class="dt-search" placeholder="Search samples, regimes…" />
+        </div>
+        <div class="dt-filter-group">
+          <label class="dt-filter-label">Regime</label>
+          <div class="segmented-control" id="regimeFilter">
+            <button class="seg-btn active" data-regime="all">All</button>
+            <button class="seg-btn" data-regime="normal">Normal</button>
+            <button class="seg-btn" data-regime="strained">Strained</button>
+            <button class="seg-btn" data-regime="anomaly">Anomaly</button>
+          </div>
+        </div>
+        <div class="dt-filter-group">
+          <label class="dt-filter-label">View</label>
+          <div class="segmented-control" id="tableView">
+            <button class="seg-btn active" data-view="sensor">Sensor Raw</button>
+            <button class="seg-btn" data-view="pca">PCA Scores</button>
+            <button class="seg-btn" data-view="both">Combined</button>
+          </div>
+        </div>
+        <div class="dt-actions">
+          <button class="btn-sm btn-primary" id="downloadCSV">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            CSV
+          </button>
+          <button class="btn-sm btn-outline" id="downloadJSON">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            JSON
+          </button>
+          <button class="btn-sm btn-outline" id="copyClipboard">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copy
+          </button>
+        </div>
+      </div>
+
+      <!-- Data Summary Strips -->
+      <div class="data-summary-strip" id="dataSummaryStrip">
+        <!-- filled by JS -->
+      </div>
+
+      <!-- Table Container -->
+      <div class="dt-container">
+        <div class="dt-scroll-wrap">
+          <table class="data-table" id="mainDataTable">
+            <thead id="dtHead"></thead>
+            <tbody id="dtBody"></tbody>
+          </table>
+        </div>
+        <!-- Pagination -->
+        <div class="dt-footer">
+          <div class="dt-info" id="dtInfo">Showing 0 of 0 rows</div>
+          <div class="dt-pagination" id="dtPagination"></div>
+          <div class="dt-page-size">
+            <label>Rows per page</label>
+            <select class="styled-select" id="dtPageSize" style="padding:4px 10px;font-size:0.78rem">
+              <option value="10">10</option>
+              <option value="20" selected>20</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Statistics Summary Table -->
+      <div class="stats-summary-card">
+        <div class="chart-card-header">
+          <h4>Descriptive Statistics — All Sensor Channels</h4>
+          <span class="section-tag" style="margin:0">Auto-computed</span>
+        </div>
+        <div class="dt-scroll-wrap">
+          <table class="stats-table" id="statsTable">
+            <thead id="statsHead"></thead>
+            <tbody id="statsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>
